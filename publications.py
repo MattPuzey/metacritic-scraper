@@ -1,5 +1,5 @@
 import requests
-import bs4
+from bs4 import BeautifulSoup
 
 COLLECTION_SIZE = 60
 URL = 'http://www.metacritic.com/publication/{publication_name}' \
@@ -16,8 +16,26 @@ def get_publication(name):
     formatted_uri = URL.format(publication_name=name, release_count=COLLECTION_SIZE)
     response = requests.get(formatted_uri, headers=REQUEST_HEADERS)
     html = response.text
-    print(html)
+    return pick_reviews(html)
+
+
+def pick_reviews(html):
+    reviews = []
+    reviews_html = BeautifulSoup(html, 'html.parser')\
+        .findAll('li', attrs={'class': 'review critic_review'})
+    for item in reviews_html:
+        name = item.find('div', attrs={'class': 'review_product'}).a.text
+        score = item.find('li', attrs={'class': 'review_product_score brief_critscore'}).span.text
+        review = {
+            'release_name': name,
+            'score': score
+        }
+        reviews.append(review)
+
+    return reviews
 
 
 if __name__ == "__main__":
-    get_publication('consequence-of-sound')
+
+    reviews = get_publication('consequence-of-sound')
+    print(reviews)
